@@ -9,6 +9,8 @@ import IconButton from '@mui/material/IconButton';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import MicIcon from '@mui/icons-material/Mic';
 import db from './Firebase';
+import { useStateValue } from "./StateProvider";
+import firebase from 'firebase/compat/app';
 
 
 const Chat=()=>{
@@ -17,6 +19,7 @@ const Chat=()=>{
     const {roomId} = useParams();
     const [roomName, setRoomName] = useState("");
     const [messages, setMessages] = useState([]);
+    const [{user}, dispatch] = useStateValue();
 
     useEffect(()=>{
         if(roomId){
@@ -36,6 +39,11 @@ const Chat=()=>{
     const sendMessage=(e)=>{
         e.preventDefault();
         console.log("you typed >>>", input);
+        db.collection('rooms').doc(roomId).collection('messages').add({
+            message:input,
+            name: user.displayName,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        })  
         setInput("");
     }
 
@@ -69,10 +77,10 @@ const Chat=()=>{
 
             <div className="chat_body">
                 {messages.map((message) =>(
-                     <p className={`chat_message ${true && 'chat_receiver'}`}>
+                     <p className={`chat_message ${message.name === user.displayName && 'chat_receiver'}`}>
                      <span className="chat_name">{message.name}</span>
-                     Hey Guyes
-                     <span className="chat_timestamp">3:52pm</span>
+                     {message.message}
+                     <span className="chat_timestamp">{new Date(message.timestamp?.toDate()).toUTCString()}</span>
                      </p>
                 ) )}
             </div> 
